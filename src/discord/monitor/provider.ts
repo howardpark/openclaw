@@ -7,7 +7,6 @@ import {
 } from "@buape/carbon";
 import type { GatewayPlugin } from "@buape/carbon/gateway";
 import { Routes } from "discord-api-types/v10";
-import { ProxyAgent, fetch as undiciFetch } from "undici";
 import { resolveTextChunkLimit } from "../../auto-reply/chunk.js";
 import { listNativeCommandSpecsForConfig } from "../../auto-reply/commands-registry.js";
 import type { HistoryEntry } from "../../auto-reply/reply/history.js";
@@ -67,6 +66,7 @@ import {
   createDiscordNativeCommand,
 } from "./native-command.js";
 import { resolveDiscordPresenceUpdate } from "./presence.js";
+import { resolveDiscordRestFetch } from "./rest-fetch.js";
 
 export type MonitorDiscordOpts = {
   token?: string;

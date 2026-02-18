@@ -3,15 +3,17 @@ import { beforeAll, describe, expect, it } from "vitest";
 import {
   getRunEmbeddedPiAgentMock,
   installTriggerHandlingE2eTestHooks,
+  loadGetReplyFromConfig,
   MAIN_SESSION_KEY,
   makeWhatsAppElevatedCfg,
+  requireSessionStorePath,
   runDirectElevatedToggleAndLoadStore,
   withTempHome,
 } from "./reply.triggers.trigger-handling.test-harness.js";
 
 let getReplyFromConfig: typeof import("./reply.js").getReplyFromConfig;
 beforeAll(async () => {
-  ({ getReplyFromConfig } = await import("./reply.js"));
+  getReplyFromConfig = await loadGetReplyFromConfig();
 });
 
 installTriggerHandlingE2eTestHooks();

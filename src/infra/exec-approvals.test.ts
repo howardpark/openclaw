@@ -405,35 +405,75 @@ describe("exec approvals shell allowlist (chained commands)", () => {
 });
 
 describe("exec approvals safe bins", () => {
-  it("allows safe bins with non-path args", () => {
+  type SafeBinCase = {
+    name: string;
+    argv: string[];
+    resolvedPath: string;
+    expected: boolean;
+    cwd?: string;
+    setup?: (cwd: string) => void;
+  };
+
+  const cases: SafeBinCase[] = [
+    {
+      name: "allows safe bins with non-path args",
+      argv: ["jq", ".foo"],
+      resolvedPath: "/usr/bin/jq",
+      expected: true,
+    },
+    {
+      name: "blocks safe bins with file args",
+      argv: ["jq", ".foo", "secret.json"],
+      resolvedPath: "/usr/bin/jq",
+      expected: false,
+      setup: (cwd) => fs.writeFileSync(path.join(cwd, "secret.json"), "{}"),
+    },
+    {
+      name: "blocks safe bins resolved from untrusted directories",
+      argv: ["jq", ".foo"],
+      resolvedPath: "/tmp/evil-bin/jq",
+      expected: false,
+      cwd: "/tmp",
+    },
+  ];
+
+  for (const testCase of cases) {
+    it(testCase.name, () => {
+      if (process.platform === "win32") {
+        return;
+      }
+      const cwd = testCase.cwd ?? makeTempDir();
+      testCase.setup?.(cwd);
+      const ok = isSafeBinUsage({
+        argv: testCase.argv,
+        resolution: {
+          rawExecutable: "jq",
+          resolvedPath: testCase.resolvedPath,
+          executableName: "jq",
+        },
+        safeBins: normalizeSafeBins(["jq"]),
+        cwd,
+      });
+      expect(ok).toBe(testCase.expected);
+    });
+  }
+
+  it("supports injected trusted safe-bin dirs for tests/callers", () => {
     if (process.platform === "win32") {
       return;
     }
-    const { dir, segment } = createSafeBinJqCase({ command: "jq .foo" });
     const ok = isSafeBinUsage({
-      argv: segment.argv,
-      resolution: segment.resolution,
+      argv: ["jq", ".foo"],
+      resolution: {
+        rawExecutable: "jq",
+        resolvedPath: "/custom/bin/jq",
+        executableName: "jq",
+      },
       safeBins: normalizeSafeBins(["jq"]),
-      cwd: dir,
+      trustedSafeBinDirs: new Set(["/custom/bin"]),
+      cwd: "/tmp",
     });
     expect(ok).toBe(true);
-  });
-
-  it("blocks safe bins with file args", () => {
-    if (process.platform === "win32") {
-      return;
-    }
-    const { dir, segment } = createSafeBinJqCase({
-      command: "jq .foo secret.json",
-      seedFileName: "secret.json",
-    });
-    const ok = isSafeBinUsage({
-      argv: segment.argv,
-      resolution: segment.resolution,
-      safeBins: normalizeSafeBins(["jq"]),
-      cwd: dir,
-    });
-    expect(ok).toBe(false);
   });
 });
 

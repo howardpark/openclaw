@@ -5,15 +5,17 @@ import type { OpenClawConfig } from "../config/config.js";
 import {
   getRunEmbeddedPiAgentMock,
   installTriggerHandlingE2eTestHooks,
+  loadGetReplyFromConfig,
   MAIN_SESSION_KEY,
   makeCfg,
   makeWhatsAppElevatedCfg,
+  requireSessionStorePath,
   withTempHome,
 } from "./reply.triggers.trigger-handling.test-harness.js";
 
 let getReplyFromConfig: typeof import("./reply.js").getReplyFromConfig;
 beforeAll(async () => {
-  ({ getReplyFromConfig } = await import("./reply.js"));
+  getReplyFromConfig = await loadGetReplyFromConfig();
 });
 
 installTriggerHandlingE2eTestHooks();
